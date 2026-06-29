@@ -1,15 +1,8 @@
-qclaw客户端已更新授权方式，此项目方式暂时不可用，后续视情况决定是否继续更新，谢谢
-
 # GetQClawAPIKey
 
-一个本地 Node CLI 工具，用微信扫码登录 QClaw，并在终端直接打印可用的明文 `apiKey`。
+从已登录的本机 QClaw 中提取并打印明文 `apiKey` 的本地 Node CLI。
 
-它会在终端输出：
-
-- ASCII 二维码
-- 扫码和登录状态日志
-- 明文 `apiKey`
-- 可直接执行的 `curl` 示例
+这个项目现在不再模拟 QClaw 微信扫码登录，也不再调用 QClaw 登录接口。你需要先在官方 QClaw 客户端里完成一次登录/授权；脚本随后读取 QClaw 保存到本机的 provider key。
 
 ## Quick Start
 
@@ -18,48 +11,44 @@ npm install
 npm start
 ```
 
-运行后：
+仅打印 key，不输出 `curl` 示例：
 
-1. 用微信扫描终端里的 ASCII 二维码
-2. 在微信里确认登录
-3. 等待终端打印 `apiKey`
+```bash
+node main.cjs --key-only
+```
 
-## 运行效果
+## 前置条件
 
-下面是脱敏后的示例输出：
+- macOS
+- 已安装 QClaw
+- 已打开 QClaw 并完成一次登录/授权
+- 运行脚本时允许访问 macOS Keychain 中的 `QClaw Safe Storage`
+
+脚本默认读取：
 
 ```text
-> npm start
-
-> get-qclaw-api-key@1.0.0 start
-> node server.js
-
-[23:45:49] 正在请求登录 state...
-[23:45:49] 正在获取微信二维码页面...
-[23:45:49] guid=<GUID>
-[23:45:49] state=<STATE>
-[23:45:49] 请使用微信扫描下面的二维码：
-[23:45:49] 正在下载二维码图片，uuid=<UUID>
-
-<ASCII QR CODE>
-
-[23:45:50] 开始轮询扫码状态...
-[23:46:15] 二维码已扫描，等待微信里点击允许...
-[23:46:17] 微信确认完成，已拿到登录 code。
-[23:46:17] 正在调用 4026 换取登录态...
-[23:46:18] 4026 未返回完整 user_info，补调 4027...
-[23:46:18] 登录成功，loginKey=no，jwt=yes，channelToken=yes。
-[23:46:18] 正在调用 4055 获取 apiKey...
-[23:46:18] 正在调用 4155 上报首次登录风控事件... deviceToken=guid
-[23:46:19] 4155 调用成功。deviceToken=guid
-
-[23:46:19] apiKey 获取成功。
-sk-<REDACTED>
+~/Library/Application Support/QClaw/app-store.json
 ```
+
+也可以通过环境变量覆盖：
+
+```bash
+QCLAW_APP_STORE_PATH=/path/to/app-store.json npm start
+```
+
+## 原理
+
+QClaw 登录后会把默认 provider 的 key 存在 `app-store.json`：
+
+```text
+authGateway.providers.qclaw.apiKey
+```
+
+该值通常是 Chromium/Electron `v10` 格式密文。脚本会从 macOS Keychain 读取 `QClaw Safe Storage` / `QClaw Key`，然后解密并打印明文 key。
 
 ## API 用法
 
-当前已验证可直接调用的聊天补全接口地址：
+聊天补全接口地址：
 
 ```text
 https://mmgrcalltoken.3g.qq.com/aizone/v1/chat/completions
@@ -68,19 +57,19 @@ https://mmgrcalltoken.3g.qq.com/aizone/v1/chat/completions
 示例请求：
 
 ```bash
-curl 'https://mmgrcalltoken.3g.qq.com/aizone/v1/chat/completions' \
+curl --location --request POST 'https://mmgrcalltoken.3g.qq.com/aizone/v1/chat/completions' \
   -H 'Authorization: Bearer <YOUR_API_KEY>' \
   -H 'Content-Type: application/json' \
   -d '{
     "model": "modelroute",
     "messages": [
+      { "role": "system", "content": "hi" },
       { "role": "user", "content": "hi" }
-    ],
-    "max_tokens": 10000
+    ]
   }'
 ```
 
-接口是 OpenAI 兼容的 `chat/completions` 风格。
+注意：该网关虽然兼容 OpenAI `chat/completions` 格式，但只传单条 `user` 消息会返回 `400 invalid request`。示例中保留了一条最小 `system` 消息用于验证。
 
 如果是在 OpenClaw 里配置 provider，`baseUrl` 应填写：
 
@@ -90,36 +79,16 @@ https://mmgrcalltoken.3g.qq.com/aizone/v1
 
 不要带 `/chat/completions`；OpenClaw 会自行拼接后续路径。
 
-## 已验证模型
-
-当前已验证可正常调用：
-
-- `modelroute`（疑似 QClaw 默认模型，后台可动态切换）
-- `deepseek-v3.1-terminus`
-- `deepseek-v3.2`
-
-通过请求体里的 `model` 字段切换模型，例如：
-
-```json
-{
-  "model": "deepseek-v3.2",
-  "messages": [
-    { "role": "user", "content": "你好" }
-  ],
-  "max_tokens": 10000
-}
-```
-
 ## 常见问题
 
-### 二维码过期
+### 提示未找到 app-store.json
 
-重新运行脚本即可。
+先安装并打开 QClaw，完成一次登录/授权。
 
-### 登录成功但接口仍不可用
+### 提示未找到 authGateway.providers.qclaw.apiKey
 
-在之前的版本，初登用户没有权限，新版脚本在会自动调用 `4155` 完成激活步骤。
+说明 QClaw 还没有把默认 provider key 写入本地存储。打开 QClaw，确认登录状态正常，并让客户端完成初始化。
 
-### 想切换模型
+### Keychain 弹出授权提示
 
-修改请求体里的 `model` 字段即可。
+允许终端或 Node 访问 `QClaw Safe Storage`，否则无法解密本地密文。
