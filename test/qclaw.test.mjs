@@ -3,7 +3,9 @@ import test from 'node:test';
 
 import {
   extractRespData,
+  normalizeQPointAccount,
   normalizeModelRows,
+  summarizeQPointFlows,
   summarizeUsageDetails,
 } from '../lib/qclaw.mjs';
 
@@ -54,5 +56,51 @@ test('summarizeUsageDetails totals usage records', () => {
     completionTokens: 12,
     totalTokens: 42,
     cost: 0.3,
+  });
+});
+
+test('normalizeQPointAccount maps point balance details', () => {
+  const account = normalizeQPointAccount({
+    balance: 798.27553,
+    total_daily_free_granted: 800,
+    updated_at: '2026-05-09T01:50:12+08:00',
+    balance_detail: {
+      daily_free: 798.27553,
+      activity_q: 1,
+      subscription_q: 2,
+      package_q: 3,
+      items: [{ label: '活动赠送', remain_amount: 798.27553 }],
+    },
+  });
+
+  assert.deepEqual(account, {
+    balance: 798.27553,
+    activityPoints: 799.27553,
+    subscriptionPoints: 2,
+    packagePoints: 3,
+    totalDailyFreeGranted: 800,
+    updatedAt: '2026-05-09T01:50:12+08:00',
+    items: [{ label: '活动赠送', remain_amount: 798.27553 }],
+  });
+});
+
+test('summarizeQPointFlows totals point flow page', () => {
+  const summary = summarizeQPointFlows({
+    total: 3,
+    page: 1,
+    page_size: 2,
+    flows: [
+      { direction: 2, amount: 0.1 },
+      { direction: 1, amount: 2 },
+    ],
+  });
+
+  assert.deepEqual(summary, {
+    totalFlows: 3,
+    page: 1,
+    pageSize: 2,
+    flowCountInPage: 2,
+    consumedInPage: 0.1,
+    gainedInPage: 2,
   });
 });

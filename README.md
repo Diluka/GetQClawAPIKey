@@ -119,7 +119,7 @@ https://mmgrcalltoken.3g.qq.com/aizone/v1
 
 不要带 `/chat/completions`；OpenClaw 会自行拼接后续路径。
 
-## 余额和用量
+## 积分余额和用量
 
 ```bash
 npm run balance
@@ -127,24 +127,26 @@ npm run balance
 
 默认输出：
 
-- `daily_token_limit`：每日 token 额度
-- `daily_token_used`：QClaw 返回的当日已用额度字段
-- `daily_token_remaining`：按 `limit - used` 计算
-- `rpm_limit`：每分钟请求限制
-- `usage_records_total`：当天用量明细总条数
-- `usage_tokens_total_in_page`：当前页明细 token 合计
-- `usage_cost_total_in_page`：当前页明细 cost 合计
+- `points_balance`：当前总积分余额
+- `activity_points`：活动积分，等于 QClaw 返回的 `daily_free + activity_q`
+- `subscription_points`：订阅积分
+- `package_points`：积分包余额
+- `total_daily_free_granted`：活动/每日赠送积分总额
+- `point_flows_total`：积分流水总条数
+- `point_consumed_in_page`：当前页积分消耗合计
+- `point_gained_in_page`：当前页积分收入合计
 
 可选参数：
 
 ```bash
-npm run balance -- --date 2026-06-29
 npm run balance -- --json
 npm run balance -- --json --records
 npm run balance -- --page 2 --page-size 50
+npm run balance -- --tokens
+npm run balance -- --tokens --date 2026-06-29
 ```
 
-默认不会打印明细里的 query 内容；只有显式加 `--records` 才会在 JSON 输出中包含原始明细记录。
+默认不会打印积分流水明细；只有显式加 `--records` 才会在 JSON 输出中包含原始流水。`--tokens` 会额外输出旧的每日 token quota 和指定日期 token 用量明细汇总。
 
 ## 常见问题
 
