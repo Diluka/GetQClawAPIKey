@@ -87,18 +87,20 @@ curl --location --request POST 'https://mmgrcalltoken.3g.qq.com/aizone/v1/chat/c
 
 QClaw 客户端菜单里的具体模型在 API 中使用 `pool-` 前缀模型 ID；`modelroute` 是 Auto，不是具体模型。
 
+该 API 当前所有可请求模型使用统一规格：上下文窗口 `200k`，最大输出 `8192` tokens。
+
 当前已用本项目脚本和 QClaw key 实测 `chat/completions` 可返回 `200` 的具体模型：
 
-| 显示名 | API model |
-| --- | --- |
-| DeepSeek-V4-Pro | `pool-deepseek-v4-pro` |
-| DeepSeek-V4-Flash | `pool-deepseek-v4-flash` |
-| GLM-5.2 | `pool-glm-5.2` |
-| Kimi-K2.7-Code-HighSpeed | `pool-kimi-k2.7-code-highspeed` |
-| MiniMax-M3 | `pool-minimax-m3` |
-| GLM-5.1 | `pool-glm-5.1` |
-| Kimi-K2.6 | `pool-kimi-k2.6` |
-| MiniMax-M2.7 | `pool-minimax-m2.7` |
+| 显示名 | API model | 上下文 | 最大输出 |
+| --- | --- | --- | --- |
+| DeepSeek-V4-Pro | `pool-deepseek-v4-pro` | `200k` | `8192` |
+| DeepSeek-V4-Flash | `pool-deepseek-v4-flash` | `200k` | `8192` |
+| GLM-5.2 | `pool-glm-5.2` | `200k` | `8192` |
+| Kimi-K2.7-Code-HighSpeed | `pool-kimi-k2.7-code-highspeed` | `200k` | `8192` |
+| MiniMax-M3 | `pool-minimax-m3` | `200k` | `8192` |
+| GLM-5.1 | `pool-glm-5.1` | `200k` | `8192` |
+| Kimi-K2.6 | `pool-kimi-k2.6` | `200k` | `8192` |
+| MiniMax-M2.7 | `pool-minimax-m2.7` | `200k` | `8192` |
 
 `npm run models` 会直接调用 QClaw 客户端使用的模型列表接口，并输出当前状态、倍率和能力标签：
 
